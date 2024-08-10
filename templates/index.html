@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Face Comparison App</title>
+    <style>
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        #video {
+            width: 320px;
+            height: 240px;
+            border: 1px solid black;
+        }
+        #canvas {
+            display: none;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 20px;
+        }
+        #captured-image {
+            max-width: 320px;
+            max-height: 240px;
+            border: 1px solid black;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <video id="video" autoplay></video>
+        <div class="controls">
+            <canvas id="canvas"></canvas>
+            <img id="captured-image" src="" alt="Captured Image">
+            <button id="capture">Capture Image</button>
+            <button id="upload">Upload Image</button>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('upload');
+        const statusElement = document.getElementById('status');
+        const capturedImage = document.getElementById('captured-image');
+        const context = canvas.getContext('2d');
+
+        // Set up the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error accessing the webcam:', err);
+                statusElement.textContent = 'Error accessing the webcam. Please check your permissions.';
+            });
+
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/png');
+            capturedImage.src = dataUrl; // Display the captured image
+        });
+
+        uploadButton.addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: dataUrl }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusElement.textContent = data.status;
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(err => {
+                console.error('Error uploading the image:', err);
+                statusElement.textContent = 'Error uploading the image. Please try again.';
+            });
+        });
+    </script>
+</body>
+</html>

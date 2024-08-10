@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Chat with Lex Bot</title>
+</head>
+<body>
+    <h1>Chat with Lex Bot</h1>
+    <div id="chat">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button id="send">Send</button>
+        <div id="conversation"></div>
+    </div>
+
+    <script>
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('send');
+        const conversation = document.getElementById('conversation');
+
+        sendButton.addEventListener('click', () => {
+            const message = userInput.value;
+            if (message) {
+                conversation.innerHTML += `<p>You: ${message}</p>`;
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    conversation.innerHTML += `<p>Bot: ${data.response}</p>`;
+                    userInput.value = '';
+                })
+                .catch(err => {
+                    console.error('Error sending message:', err);
+                    conversation.innerHTML += `<p>Bot: Error processing your message.</p>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
